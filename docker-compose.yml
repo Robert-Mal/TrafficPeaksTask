@@ -1,0 +1,16 @@
+version: '3'
+
+services:
+###> doctrine/doctrine-bundle ###
+  database:
+    image: mysql:8
+    volumes:
+      - database_data:/var/lib/mysql:rw
+    env_file:
+      - .env.dev.local
+###< doctrine/doctrine-bundle ###
+
+volumes:
+###> doctrine/doctrine-bundle ###
+  database_data:
+###< doctrine/doctrine-bundle ###
