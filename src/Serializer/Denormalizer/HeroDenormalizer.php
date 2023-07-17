@@ -12,9 +12,6 @@ use App\Service\HeroApiService;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 
-/**
- * @method getSupportedTypes(?string $format)
- */
 class HeroDenormalizer implements DenormalizerInterface
 {
     public function __construct(
@@ -69,5 +66,17 @@ class HeroDenormalizer implements DenormalizerInterface
     public function supportsDenormalization(mixed $data, string $type, string $format = null): bool
     {
         return Hero::class === $type;
+    }
+
+    /**
+     * @return array<class-string|'*'|'object'|string, bool|null>
+     */
+    public function getSupportedTypes(?string $format): array
+    {
+        return [
+            'object' => null,
+            '*' => false,
+            Hero::class => true,
+        ];
     }
 }
