@@ -8,22 +8,19 @@ use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Pool;
 use GuzzleHttp\Psr7\Response;
 use Psr\Http\Message\StreamInterface;
-use Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor;
-use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
-use Symfony\Component\Serializer\Serializer;
-use Symfony\Component\Serializer\SerializerInterface;
 
 class HeroApiService
 {
-    private SerializerInterface $serializer;
+    private const HERO_API_URL = 'https://swapi.dev/api/people/';
+    private const FIRST_HERO_NUMBER = 1;
+    private const LAST_HERO_NUMBER = 83;
 
     public function __construct(
         private readonly ClientInterface $myClientClient,
         private readonly EntityManagerInterface $entityManager,
         private readonly ObjectNormalizer $normalizer
     ) {
-        $this->serializer = new Serializer([new ObjectNormalizer(null, null, null, new ReflectionExtractor())], [new JsonEncoder()]);
     }
 
     /**
@@ -33,9 +30,9 @@ class HeroApiService
     {
         $responses = [];
         $requests = function () {
-            for ($i = 1; $i <= 83; ++$i) {
+            for ($i = self::FIRST_HERO_NUMBER; $i <= self::LAST_HERO_NUMBER; ++$i) {
                 yield function () use ($i) {
-                    return $this->myClientClient->requestAsync('GET', 'https://swapi.dev/api/people/'.$i);
+                    return $this->myClientClient->requestAsync('GET', self::HERO_API_URL.$i);
                 };
             }
         };
