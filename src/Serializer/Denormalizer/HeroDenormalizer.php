@@ -14,12 +14,23 @@ use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 
 class HeroDenormalizer implements DenormalizerInterface
 {
+    /**
+     * @param ObjectNormalizer $normalizer
+     * @param HeroApiService $heroApiService
+     */
     public function __construct(
         private readonly ObjectNormalizer $normalizer,
         private readonly HeroApiService $heroApiService
     ) {
     }
 
+    /**
+     * @param mixed $data
+     * @param string $type
+     * @param string|null $format
+     * @param string[] $context
+     * @return Hero
+     */
     public function denormalize(mixed $data, string $type, string $format = null, array $context = []): Hero
     {
         $heroDecoded = json_decode($data, true);
@@ -42,27 +53,43 @@ class HeroDenormalizer implements DenormalizerInterface
         $hero = $this->normalizer->denormalize($heroDecoded, $type, $format, $context);
         $hero->setId($heroId);
         $homeworld = $this->heroApiService->getEntity($heroAdditionalData['homeworldUrl'], Planet::class);
-        $hero->setHomeworld($homeworld);
+        if ($homeworld) {
+            $hero->setHomeworld($homeworld);
+        }
         foreach ($heroAdditionalData['filmUrls'] as $filmUrl) {
             $film = $this->heroApiService->getEntity($filmUrl, Film::class);
-            $hero->addFilm($film);
+            if ($film) {
+                $hero->addFilm($film);
+            }
         }
         foreach ($heroAdditionalData['speciesUrls'] as $speciesUrl) {
             $species = $this->heroApiService->getEntity($speciesUrl, Species::class);
-            $hero->addSpecies($species);
+            if ($species) {
+                $hero->addSpecies($species);
+            }
         }
         foreach ($heroAdditionalData['vehicleUrls'] as $vehicleUrl) {
             $vehicle = $this->heroApiService->getEntity($vehicleUrl, Vehicle::class);
-            $hero->addVehicle($vehicle);
+            if ($vehicle) {
+                $hero->addVehicle($vehicle);
+            }
         }
         foreach ($heroAdditionalData['starshipUrls'] as $starshipUrl) {
             $starship = $this->heroApiService->getEntity($starshipUrl, Starship::class);
-            $hero->addStarship($starship);
+            if ($starship) {
+                $hero->addStarship($starship);
+            }
         }
 
         return $hero;
     }
 
+    /**
+     * @param mixed $data
+     * @param string $type
+     * @param string|null $format
+     * @return bool
+     */
     public function supportsDenormalization(mixed $data, string $type, string $format = null): bool
     {
         return Hero::class === $type;
