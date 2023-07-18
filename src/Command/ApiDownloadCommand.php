@@ -8,7 +8,6 @@ use App\Entity\Planet;
 use App\Entity\Species;
 use App\Entity\Starship;
 use App\Entity\Vehicle;
-use App\Serializer\Denormalizer\HeroDenormalizer;
 use App\Service\HeroApiService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -17,10 +16,8 @@ use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use Symfony\Component\Serializer\Encoder\JsonEncoder;
-use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
-use Symfony\Component\Serializer\Serializer;
-use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\Serializer\Exception\ExceptionInterface;
+use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 
 #[AsCommand(
     name: 'api:download',
@@ -28,18 +25,22 @@ use Symfony\Component\Serializer\SerializerInterface;
 )]
 class ApiDownloadCommand extends Command
 {
-    private readonly SerializerInterface $serializer;
-
+    /**
+     * @param HeroApiService $heroApiService
+     * @param EntityManagerInterface $entityManager
+     * @param DenormalizerInterface $denormalizer
+     */
     public function __construct(
-        private readonly NormalizerInterface $heroNormalizer,
         private readonly HeroApiService $heroApiService,
         private readonly EntityManagerInterface $entityManager,
-        private readonly HeroDenormalizer $denormalizer
+        private readonly DenormalizerInterface $denormalizer
     ) {
-        $this->serializer = new Serializer([$heroNormalizer], [new JsonEncoder()]);
         parent::__construct();
     }
 
+    /**
+     * @inheritdoc
+     */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
@@ -52,7 +53,12 @@ class ApiDownloadCommand extends Command
         $progressBar = new ProgressBar($output, count($heroes));
         $progressBar->start();
         foreach ($heroes as $hero) {
-            $heroEntity = $this->denormalizer->denormalize($hero, Hero::class, 'json');
+            try {
+                $heroEntity = $this->denormalizer->denormalize($hero, Hero::class, 'json');
+            } catch (ExceptionInterface) {
+                $progressBar->advance();
+                continue;
+            }
             $this->entityManager->persist($heroEntity);
             $this->entityManager->flush();
             $progressBar->advance();
@@ -64,6 +70,9 @@ class ApiDownloadCommand extends Command
         return Command::SUCCESS;
     }
 
+    /**
+     * @return void
+     */
     private function purgeDatabase(): void
     {
         $heroes = $this->entityManager->getRepository(Hero::class)->findAll();

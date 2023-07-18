@@ -12,10 +12,24 @@ use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 
 class HeroApiService
 {
+    /**
+     * @var string HERO_API_URL
+     */
     private const HERO_API_URL = 'https://swapi.dev/api/people/';
+    /**
+     * @var int FIRST_HERO_NUMBER
+     */
     private const FIRST_HERO_NUMBER = 1;
+    /**
+     * @var int LAST_HERO_NUMBER
+     */
     private const LAST_HERO_NUMBER = 83;
 
+    /**
+     * @param ClientInterface $myClientClient
+     * @param EntityManagerInterface $entityManager
+     * @param ObjectNormalizer $normalizer
+     */
     public function __construct(
         private readonly ClientInterface $myClientClient,
         private readonly EntityManagerInterface $entityManager,
@@ -47,13 +61,17 @@ class HeroApiService
         return $responses;
     }
 
+    /**
+     * @param string $url
+     * @return int
+     */
     public function extractIdFromUrl(string $url): int
     {
         return (int) filter_var($url, FILTER_SANITIZE_NUMBER_INT);
     }
 
     /**
-     * @template T
+     * @template T of object
      *
      * @param class-string<T> $className
      *
@@ -63,7 +81,7 @@ class HeroApiService
     {
         try {
             $apiResponse = $this->myClientClient->request('GET', $url)->getBody();
-        } catch (GuzzleException $e) {
+        } catch (GuzzleException) {
             return null;
         }
         $entityId = $this->extractIdFromUrl($url);
@@ -74,11 +92,11 @@ class HeroApiService
     }
 
     /**
-     * @template T
+     * @template T of object
      *
      * @param class-string<T> $className
      *
-     * @return T
+     * @return ?T
      */
     public function getEntity(string $url, string $className)
     {
